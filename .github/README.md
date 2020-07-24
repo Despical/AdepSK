@@ -14,25 +14,3 @@ AdepSK is a box of common Skript addons that provides a powerful reflection util
 | [HikariCP](https://github.com/brettwooldridge/HikariCP) | [brettwooldridge](https://github.com/brettwooldridge) | [Apache License 2.0](https://github.com/brettwooldridge/HikariCP/blob/dev/LICENSE) |
 | [AnvilGUI](https://github.com/WesJD/AnvilGUI)  | [WesJD](https://github.com/WesJD)             | [MIT](https://github.com/WesJD/AnvilGUI/blob/master/LICENSE)      |
 | [Commons Box](https://github.com/Despical/Commons-Box)  | [Despical](https://github.com/Despical)             | [GPLv3](https://github.com/Despical/Commons-Box/blob/master/LICENSE.md)      |
-
-## Want to AdepSK API? [![](https://jitpack.io/v/Despical/AdepSJ.svg)](https://jitpack.io/#Despical/AdepSK)
-Add repository
-```xml
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-```
-Then add the dependency
-```xml
-    <dependencies>
-        <dependency>
-            <groupId>com.github.Despical</groupId>
-            <artifactId>AdepSK</artifactId>
-            <version>1.0.0</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
-```
