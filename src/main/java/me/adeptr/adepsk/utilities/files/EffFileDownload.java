@@ -1,0 +1,46 @@
+package me.adeptr.adepsk.utilities.files;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.annotation.Nullable;
+
+import org.bukkit.Bukkit;
+import org.bukkit.event.Event;
+
+import ch.njol.skript.lang.Effect;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.util.Kleenean;
+import me.adeptr.adepsk.Main;
+import me.adeptr.adepsk.utilities.files.event.EvtFileDownload;
+
+/**
+ * Created by tim740 on 21/03/2016
+ */
+public class EffFileDownload extends Effect {
+	private Expression<String> url, path;
+
+	@Override
+	protected void execute(Event e) {
+		Path pth = Paths.get(Main.getDefaultPath(path.getSingle(e)));
+		EvtFileDownload efd = new EvtFileDownload(url.getSingle(e), pth);
+		Bukkit.getServer().getPluginManager().callEvent(efd);
+		if (!efd.isCancelled()) {
+			Main.downloadFile(pth, url.getSingle(e));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean init(Expression<?>[] e, int i, Kleenean k, ParseResult p) {
+		url = (Expression<String>) e[0];
+		path = (Expression<String>) e[1];
+		return true;
+	}
+
+	@Override
+	public String toString(@Nullable Event e, boolean b) {
+		return getClass().getName();
+	}
+}

@@ -1,0 +1,65 @@
+package me.adeptr.adepsk.utilities.url;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import javax.annotation.Nullable;
+
+import org.bukkit.event.Event;
+
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.SkriptParser.ParseResult;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.util.Kleenean;
+import me.adeptr.adepsk.Main;
+
+/**
+ * Created by tim740 on 14/09/2016
+ */
+public class ExprUrlSize extends SimpleExpression<String> {
+	private Expression<String> url;
+
+	@Override
+	@Nullable
+	protected String[] get(Event e) {
+		try {
+			HttpURLConnection c = (HttpURLConnection) new URL(url.getSingle(e)).openConnection();
+			c.setRequestProperty("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			Number n = c.getContentLength();
+			c.disconnect();
+			if (n.intValue() == -1) {
+				Main.prSysE("Url: '" + url.getSingle(e) + "' returned no information about the url's size!",
+						getClass().getSimpleName());
+			} else {
+				return new String[] { Main.getFileSize(n.doubleValue()) };
+			}
+		} catch (Exception x) {
+			Main.prSysE("Error Reading from: '" + url.getSingle(e) + "' Is the site down?", getClass().getSimpleName(),
+					x);
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean init(Expression<?>[] e, int i, Kleenean k, ParseResult p) {
+		url = (Expression<String>) e[0];
+		return true;
+	}
+
+	@Override
+	public Class<? extends String> getReturnType() {
+		return String.class;
+	}
+
+	@Override
+	public boolean isSingle() {
+		return true;
+	}
+
+	@Override
+	public String toString(@Nullable Event e, boolean b) {
+		return getClass().getName();
+	}
+}

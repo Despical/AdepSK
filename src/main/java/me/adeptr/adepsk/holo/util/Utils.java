@@ -1,0 +1,194 @@
+package me.adeptr.adepsk.holo.util;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.plugin.Plugin;
+
+import com.gmail.filoghost.holographicdisplays.api.Hologram;
+import com.gmail.filoghost.holographicdisplays.api.line.CollectableLine;
+import com.gmail.filoghost.holographicdisplays.api.line.HologramLine;
+import com.gmail.filoghost.holographicdisplays.api.line.ItemLine;
+import com.gmail.filoghost.holographicdisplays.api.line.TouchableLine;
+
+import ch.njol.skript.util.Direction;
+import me.adeptr.adepsk.Main;
+import me.adeptr.adepsk.holo.skript.effects.EffCreateHologram;
+
+public class Utils {
+
+	public static boolean hasPlugin(String name) {
+		return Bukkit.getServer().getPluginManager().isPluginEnabled(name);
+	}
+
+	public static Plugin getPlugin(String name) {
+		return Bukkit.getServer().getPluginManager().getPlugin(name);
+	}
+
+	public static List<HologramLine> getHologramLines(Hologram holo) {
+		List<HologramLine> lines = new ArrayList<>();
+		for (int l = 0; l < holo.size(); l++)
+			lines.add(holo.getLine(l));
+		return lines;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void deleteHologram(Integer entityID, Hologram... holograms) {
+		for (Hologram holo : holograms) {
+			if (!holo.isDeleted())
+				holo.delete();
+			if (holo.equals(EffCreateHologram.lastCreated))
+				EffCreateHologram.lastCreated = null;
+			if (isFollowingHologram(holo)) {
+				Iterator it;
+				it = Main.followingHologramsEntities.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry entry = (Map.Entry) it.next();
+					List<Hologram> holoList = (List<Hologram>) entry.getValue();
+					holoList.removeIf(holo2 -> holo2.equals(holo));
+					if (holoList.isEmpty())
+						it.remove();
+				}
+				if (entityID == null) {
+					it = Main.followingHolograms.entrySet().iterator();
+					while (it.hasNext()) {
+						Map.Entry entry = (Map.Entry) it.next();
+						Map<Hologram, Direction[]> holoMap = (Map<Hologram, Direction[]>) entry.getValue();
+						for (Object o2 : holoMap.entrySet()) {
+							Map.Entry entry2 = (Map.Entry) o2;
+							if (entry2.getKey().equals(holo)) {
+								it.remove();
+							}
+						}
+					}
+				} else {
+					Main.followingHolograms.remove(entityID);
+				}
+			}
+			Main.followingHologramsList.remove(holo);
+		}
+	}
+
+	public static void deleteHologram(Hologram... holograms) {
+		deleteHologram(null, holograms);
+	}
+
+	public static void deleteFollowingHolograms(int entityID) {
+		Map<Hologram, Direction[]> holoMap = Main.followingHolograms.get(entityID);
+		if (holoMap == null || holoMap.isEmpty())
+			return;
+		for (Object o : holoMap.entrySet()) {
+			Map.Entry entry = (Map.Entry) o;
+			Hologram holo = (Hologram) entry.getKey();
+			Utils.deleteHologram(entityID, holo);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void cleanFollowingHolograms() {
+		for (Object o : Main.followingHologramsEntities.entrySet()) {
+			Map.Entry entry = (Map.Entry) o;
+			Entity entity = (Entity) entry.getKey();
+			if (!entity.isValid()) {
+				for (Hologram holo : (List<Hologram>) entry.getValue()) {
+					if (!holo.isDeleted())
+						holo.delete();
+					if (holo.equals(EffCreateHologram.lastCreated))
+						EffCreateHologram.lastCreated = null;
+					Main.followingHologramsList.remove(holo);
+				}
+				Main.followingHologramsEntities.remove(entity);
+				Main.followingHolograms.remove(entity.getEntityId());
+			}
+		}
+	}
+
+	public static Location offsetLocation(Location loc, Direction... directions) {
+		for (Direction d : directions)
+			loc = d.getRelative(loc);
+		return loc;
+	}
+
+	public static void makeHologramStartFollowing(Hologram holo, Entity entity, Direction[] offset) {
+		Main.followingHologramsList.add(holo);
+
+		Map<Hologram, Direction[]> holoMap;
+		int entityID = entity.getEntityId();
+		holoMap = Main.followingHolograms.get(entityID);
+		if (holoMap == null)
+			holoMap = new HashMap<>();
+		holoMap.put(holo, offset);
+		Main.followingHolograms.put(entityID, holoMap);
+
+		List<Hologram> holoList;
+		holoList = Main.followingHologramsEntities.get(entity);
+		if (holoList == null)
+			holoList = new ArrayList<>();
+		holoList.add(holo);
+		Main.followingHologramsEntities.put(entity, holoList);
+
+		Location location = entity.getLocation().clone();
+		if (holo.getWorld() == location.getWorld())
+			holo.teleport(offset != null ? offsetLocation(location, offset) : location);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void makeHologramStopFollowing(Hologram holo) {
+		Iterator it;
+		it = Main.followingHolograms.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry entry = (Map.Entry) it.next();
+			Map<Hologram, Direction[]> holoMap = (Map<Hologram, Direction[]>) entry.getValue();
+			Iterator it2 = holoMap.entrySet().iterator();
+			while (it2.hasNext()) {
+				Hologram holo2 = (Hologram) ((Map.Entry) it2.next()).getKey();
+				if (holo2.equals(holo))
+					it2.remove();
+			}
+			it.remove();
+		}
+
+		it = Main.followingHologramsEntities.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry entry = (Map.Entry) it.next();
+			List<Hologram> holoList = (List<Hologram>) entry.getValue();
+			holoList.removeIf(holo2 -> holo2.equals(holo));
+			if (holoList.isEmpty())
+				it.remove();
+		}
+		Main.followingHologramsList.remove(holo);
+	}
+
+	public static boolean isFollowingHologram(Hologram holo) {
+		return Main.followingHologramsList.contains(holo);
+	}
+
+	public static void addTouchHandler(HologramLine line) {
+		TouchableLine tl = (TouchableLine) line;
+		if (tl.getTouchHandler() == null) {
+			tl.setTouchHandler(player -> {
+				HologramLineTouchEvent event = new HologramLineTouchEvent(player, tl);
+				Bukkit.getPluginManager().callEvent(event);
+			});
+		}
+	}
+
+	public static void addPickupHandler(HologramLine line) {
+		if (!(line instanceof ItemLine))
+			return;
+		CollectableLine tl = (CollectableLine) line;
+		if (tl.getPickupHandler() == null) {
+			tl.setPickupHandler(player -> {
+				HologramLinePickupEvent event = new HologramLinePickupEvent(player, tl);
+				Bukkit.getPluginManager().callEvent(event);
+			});
+		}
+	}
+
+}

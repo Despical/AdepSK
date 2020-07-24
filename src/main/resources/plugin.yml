@@ -1,0 +1,8 @@
+name: AdepSK
+author: Despical
+version: 1.0.0
+description: An addons box of usefull addons.
+depend: [Skript]
+api-version: 1.13
+softdepend: [Protocollib, CorpseReborn, HolographicDisplays, PlaceholderAPI]
+main: me.adeptr.adepsk.Main
